@@ -95,7 +95,9 @@ class Statusbarz {
 
         /// Finds currently rendered UI
         final boundary = context.findRenderObject() as RenderRepaintBoundary?;
-
+        if(boundary == null || boundary!.debugNeedsPaint){
+          return;
+        }
         /// Converts rendered UI to png
         final capturedImage = await boundary!.toImage();
         final byteData =
