@@ -91,15 +91,18 @@ class Statusbarz {
             'No StatusbarzObserver found from widget tree. StatusbarzObserver shall be added above MaterialApp in your widget tree.',
           );
         }
+        if(!context.mounted){
+          return;
+        }
         final view = View.of(context);
 
         /// Finds currently rendered UI
         final boundary = context.findRenderObject() as RenderRepaintBoundary?;
-        if(boundary == null || boundary!.debugNeedsPaint){
+        if(boundary == null || boundary.debugNeedsPaint){
           return;
         }
         /// Converts rendered UI to png
-        final capturedImage = await boundary!.toImage();
+        final capturedImage = await boundary.toImage();
         final byteData =
             await capturedImage.toByteData(format: ImageByteFormat.png);
         final bytes = byteData!.buffer.asUint8List();
