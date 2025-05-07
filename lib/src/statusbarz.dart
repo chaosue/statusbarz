@@ -2,6 +2,7 @@
 
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide Image;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -16,6 +17,7 @@ import 'package:statusbarz/src/statusbarz_theme.dart';
 /// {@endtemplate}
 class Statusbarz {
   Statusbarz._constructor();
+
   static final GlobalKey _key = GlobalKey();
   static final Statusbarz _instance = Statusbarz._constructor();
   static final StatusbarzObserver _observer = StatusbarzObserver();
@@ -91,16 +93,17 @@ class Statusbarz {
             'No StatusbarzObserver found from widget tree. StatusbarzObserver shall be added above MaterialApp in your widget tree.',
           );
         }
-        if(!context.mounted){
+        if (!context.mounted) {
           return;
         }
         final view = View.of(context);
 
         /// Finds currently rendered UI
         final boundary = context.findRenderObject() as RenderRepaintBoundary?;
-        if(boundary == null || boundary.debugNeedsPaint){
+        if (boundary == null || (kDebugMode && boundary.debugNeedsPaint)) {
           return;
         }
+
         /// Converts rendered UI to png
         final capturedImage = await boundary.toImage();
         final byteData =
