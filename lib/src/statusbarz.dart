@@ -11,6 +11,7 @@ import 'package:image/image.dart' as img;
 import 'package:statusbarz/src/statusbarz_exception.dart';
 import 'package:statusbarz/src/statusbarz_observer.dart';
 import 'package:statusbarz/src/statusbarz_theme.dart';
+import 'package:synchronized/synchronized.dart';
 
 /// {@template statusbarz}
 /// The interface that can be used to manually refresh the status bar color and access observer
@@ -54,6 +55,22 @@ class Statusbarz {
 
   /// Returns the key that shall be placed ONLY in StatusbarzObserver
   GlobalKey get key => _key;
+  bool? _running;
+  static final Lock _lock = Lock();
+
+  /// Starts the status bar color refresh loop in a separate isolate
+  Future<void> run() async {
+    await _lock.synchronized(() async {
+      if (_running ?? false) {
+        return;
+      }
+      _running = true;
+      while (_running ?? false) {
+        await Future<void>.delayed(const Duration(milliseconds: 1500));
+        await refresh();
+      }
+    });
+  }
 
   /// Changes status bar color based on the current background
   ///
@@ -105,7 +122,7 @@ class Statusbarz {
         }
 
         /// Converts rendered UI to png
-        final capturedImage = await boundary.toImage();
+        final capturedImage = await boundary.toImage(pixelRatio: .1);
         final byteData =
             await capturedImage.toByteData(format: ImageByteFormat.png);
         final bytes = byteData!.buffer.asUint8List();
@@ -114,10 +131,9 @@ class Statusbarz {
 
         var luminance = 0.0;
         var pixels = 0;
-        //final window = WidgetsBinding.instance.window;
 
         final mediaQuery = MediaQueryData.fromView(view);
-        final statusHeight = mediaQuery.padding.top.clamp(20.0, 150.0);
+        final statusHeight = mediaQuery.padding.top.clamp(20.0, 150.0) * .1;
 
         /// Calculates the average color for the status bar
         for (var yCoord = 0; yCoord < statusHeight.toInt(); yCoord++) {
@@ -131,7 +147,7 @@ class Statusbarz {
         final avgLuminance = luminance / pixels;
 
         /// Updates status bar color
-        if (avgLuminance > 0.5) {
+        if (avgLuminance > 150) {
           setDarkStatusBar();
         } else {
           setLightStatusBar();
@@ -142,11 +158,13 @@ class Statusbarz {
 
   /// Changes the text and icon color on the statusbar to a dark color
   void setDarkStatusBar() {
-    SystemChrome.setSystemUIOverlayStyle(theme.darkStatusBar);
+    SystemChrome.setSystemUIOverlayStyle(theme.darkStatusBar
+        .copyWith(statusBarIconBrightness: Brightness.dark),);
   }
 
   /// Changes the text and icon color on the statusbar to a light color
   void setLightStatusBar() {
-    SystemChrome.setSystemUIOverlayStyle(theme.lightStatusBar);
+    SystemChrome.setSystemUIOverlayStyle(theme.lightStatusBar
+        .copyWith(statusBarIconBrightness: Brightness.light),);
   }
 }

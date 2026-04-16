@@ -32,6 +32,12 @@ Now you can manually refresh status bar color by calling:
 ```dart
 Statusbarz.instance.refresh();
 ```
+Or auto periodically refresh it by calling:
+
+```dart
+// repeated calls to [run] method starts only one job.
+Statusbarz.instance.run();
+```
 
 Or alternatively you can refresh automatically when the current route changes. To do this, simply add `Statusbarz.instance.observer` to your `MaterialApp`s `navigatorObservers`:
 
